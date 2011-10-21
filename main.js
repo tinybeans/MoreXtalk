@@ -4,6 +4,10 @@
     var titles = $('#title, #title_file, #title_cite');
     var inputPacks = titles.closest('.post_input_pack');
     var tagsUrl = $('#logo h1 a').attr('href').replace(/(.*blog_id=\d+)(.*)/,'$1') + '&type=tags';
+    var currentTitle;
+    titles.focus(function(){
+        currentTitle = this;
+    });
 
     $('body').append('<div id="tag_box" style="display: none;"><ul id="tag_box_list"></ul></div>');
     var postOf = $('#post').offset();
@@ -27,41 +31,45 @@
             $('#tag_box_list')[0].innerHTML = tags.join('');
             var tagMode = false;
             var typing = '';
+            $('#tag_box_list').delegate('li', 'click', function(){
+                var typingReg = new RegExp('^' + typing, '');
+                var tag = $(this).text().replace(typingReg, '');
+                var v = currentTitle.value;
+                var caret = getCaret(currentTitle);
+                currentTitle.value = caret.prevAll + tag + caret.nextAll;
+                currentTitle.selectionStart = caret.prevAll.length + tag.length;
+                currentTitle.selectionEnd = caret.prevAll.length + tag.length;
+                tagMode = false;
+            });
             titles
                 .keydown(function(e){
-                    var caretPos = this.selectionStart;
+                    var caret = getCaret(this);
                     if (tagMode) {
                         switch (e.which) {
                             case 13: // Enter
                                 var typingReg = new RegExp('^' + typing, '');
                                 var tag = $('#tag_box_list').find('.current').text().replace(typingReg, '');
-                                var v = this.value;
-                                var caretPrevAll = v.slice(0, caretPos);
-                                var caretNextAll = v.slice(caretPos);
-                                this.value = caretPrevAll + tag + caretNextAll;
-                                this.selectionStart = caretPrevAll.length + tag.length;
-                                this.selectionEnd = caretPrevAll.length + tag.length;
+                                this.value = caret.prevAll + tag + caret.nextAll;
+                                this.selectionStart = caret.prevAll.length + tag.length;
+                                this.selectionEnd = caret.prevAll.length + tag.length;
                                 tagMode = false;
                                 return false;
                             case 40: // down
-                                moveCurrent(this, caretPos, 'next');
+                                moveCurrent(this, caret.position, 'next');
                                 return false;
                             case 38: // up
-                                moveCurrent(this, caretPos, 'prev');
+                                moveCurrent(this, caret.position, 'prev');
                                 return false;
                         }
                     }
                 }) // keydown
                 .keyup(function(e){
                     var v = this.value;
-                    var caretPos = this.selectionStart;
-                    var caretPrev = v.slice(caretPos - 1, caretPos);
-                    var caretPrevAll = v.slice(0, caretPos);
-                    var caretNextAll = v.slice(caretPos);
+                    var caret = getCaret(this);
                     if (e.which == 38 || e.which == 40) {
                         return false;
                     }
-                    switch (caretPrev) {
+                    switch (caret.prev) {
                         case ' ':
                             tagMode = false;
                             typing = '';
@@ -118,7 +126,7 @@
         return false;
     });
 
-    // Fuction
+    // Fuctions
     function moveCurrent (elm, caretPos, direction) {
         var tagBoxList = $('#tag_box_list');
         var current = tagBoxList.find('.current');
@@ -133,6 +141,17 @@
         }
         elm.selectionStart = caretPos;
         elm.selectionEnd = caretPos;
+    }
+
+    function getCaret (elm) {
+        var v = elm.value;
+        var pos = elm.selectionStart;
+        return {
+            position: pos,
+            prev:     v.slice(pos - 1, pos),
+            prevAll:  v.slice(0, pos),
+            nextAll:  v.slice(pos)
+        };
     }
 
 })(jQuery);
