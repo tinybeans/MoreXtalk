@@ -1,0 +1,40 @@
+@charset "UTF-8";
+
+#tag_box {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    border: 4px solid #767676;
+    -webkit-border-radius: 5px;
+    box-shadow: 1px 1px 5px #000000;
+    background: #E6E6E6;
+    color: #000000;
+    font-weight: bold;
+    font-size: 13px;
+    opacity: 0.9;
+}
+#tag_box ul {
+    margin: 0;
+    padding: 5px 0;
+    list-style-type: none;
+}
+#tag_box ul li {
+    margin: 0;
+    padding: 3px 10px;
+    cursor: pointer;
+}
+#tag_box ul li.current {
+    background-color: #C7C7C7;
+    color: #000000;
+}
+.insert_tag_list_open {
+/*     display: block; */
+/*     float: left; */
+}
+.insert_tag_list {
+/*     display: block; */
+/*     clear: both; */
+}
+.insert_tag_list a {
+    display: inline-block;
+}
