@@ -4,7 +4,6 @@
     var titles = $('#title, #title_file, #title_cite');
     var inputPacks = titles.closest('.post_input_pack');
     var tagsUrl = $('#logo h1 a').attr('href').replace(/(.*blog_id=\d+)(.*)/,'$1') + '&type=tags';
-console.log(tagsUrl);
 
     $('body').append('<div id="tag_box" style="display: none;"><ul id="tag_box_list"></ul></div>');
     var postOf = $('#post').offset();
@@ -21,6 +20,7 @@ console.log(tagsUrl);
                        .replace(/\(\d+\)/g,',')
                        .replace(/,$/g,'')
                        .split(',');
+            tags.sort();
             for (var i = 0, n = tags.length; i < n; i++) {
                 tags[i] = '<li>' + tags[i] + '</li>';
             }
@@ -33,13 +33,15 @@ console.log(tagsUrl);
                     if (tagMode) {
                         switch (e.which) {
                             case 13: // Enter
-                                var tag = $('#tag_box_list').find('.current').text();
+                                var typingReg = new RegExp('^' + typing, '');
+                                var tag = $('#tag_box_list').find('.current').text().replace(typingReg, '');
                                 var v = this.value;
                                 var caretPrevAll = v.slice(0, caretPos);
                                 var caretNextAll = v.slice(caretPos);
                                 this.value = caretPrevAll + tag + caretNextAll;
                                 this.selectionStart = caretPrevAll.length + tag.length;
                                 this.selectionEnd = caretPrevAll.length + tag.length;
+                                tagMode = false;
                                 return false;
                             case 40: // down
                                 moveCurrent(this, caretPos, 'next');
@@ -56,6 +58,9 @@ console.log(tagsUrl);
                     var caretPrev = v.slice(caretPos - 1, caretPos);
                     var caretPrevAll = v.slice(0, caretPos);
                     var caretNextAll = v.slice(caretPos);
+                    if (e.which == 38 || e.which == 40) {
+                        return false;
+                    }
                     switch (caretPrev) {
                         case ' ':
                             tagMode = false;
@@ -70,11 +75,15 @@ console.log(tagsUrl);
                             break;
                         default:
                             if (!tagMode) return;
-                            typing += String.fromCharCode(e.which).toLowerCase();
-                            var reg = new RegExp('<li[^<]*>' + typing + '[^<]*</li>','g');
+                            typing += String.fromCharCode(e.which).toLowerCase().replace(/[^-_.!~*'\(\)a-zA-Z0-9;\/?:\&=+\$,%]/,'');
+                            var reg = new RegExp('<li[^<]*>' + typing + '[^<]+</li>','g');
                             var htmlOrg = tags.join('');
                             var html = htmlOrg.match(reg);
-                            $('#tag_box_list')[0].innerHTML = html.join('');
+                            if (html != null) {
+                                $('#tag_box_list')[0].innerHTML = html.join('');
+                            } else {
+                                $('#tag_box_list')[0].innerHTML = '<li>No Match</li>';
+                            }
                     }
                 }); // keyup
         }
