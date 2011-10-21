@@ -3,7 +3,8 @@
     // Init
     var titles = $('#title, #title_file, #title_cite');
     var inputPacks = titles.closest('.post_input_pack');
-    var tagsUrl = location.href.replace(/(.*blog_id=\d+)(.*)/,'$1') + '&type=tags';
+    var tagsUrl = $('#logo h1 a').attr('href').replace(/(.*blog_id=\d+)(.*)/,'$1') + '&type=tags';
+console.log(tagsUrl);
 
     $('body').append('<div id="tag_box" style="display: none;"><ul id="tag_box_list"></ul></div>');
     var postOf = $('#post').offset();
