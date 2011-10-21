@@ -3,13 +3,11 @@
     // Init
     var titles = $('#title, #title_file, #title_cite');
     var inputPacks = titles.closest('.post_input_pack');
-/*     var msgSub = $('#form_default').find('.msg_sub'); */
     var tagsUrl = location.href.replace(/(.*blog_id=\d+)(.*)/,'$1') + '&type=tags';
 
     $('body').append('<div id="tag_box" style="display: none;"><ul id="tag_box_list"></ul></div>');
     var postOf = $('#post').offset();
     var tagBox = $('#tag_box').css({ top: postOf.top, left: postOf.left + 583 });
-/* $('.post_menu').prepend('<li><a href="#">すべてのタグ</a></li>'); */
 
     // Get Tags
     $.ajax({
@@ -26,32 +24,6 @@
                 tags[i] = '<li>' + tags[i] + '</li>';
             }
             $('#tag_box_list')[0].innerHTML = tags.join('');
-/*
-            var tag_html = [
-                '<span class="insert_tag_list_open">すべてのタグ</span>',
-                '<div class="insert_tag_list">' + tags.sort().join('') + '</div>'
-            ];
-            inputPacks
-                .append(tag_html.join(''))
-                    .find('a').click(function(){
-                        var title = $('#title:visible, #title_cite:visible').eq(0);
-                        var v = title.val();
-                        if (v == '') {
-                            title.val($(this).text() + ' ');
-                        } else {
-                            title.val(v + ' ' + $(this).text());
-                        }
-                    });
-            $('#title:visible, #title_cite:visible').focus(function(){
-                $('div.insert_tag_list').slideDown('fast');
-            });
-*/
-/*
-            $('div.insert_tag_list_open').click(function(){
-                $('div.insert_tag_list').slideToggle('fast');
-            });
-*/
-
             var tagMode = false;
             var typing = '';
             titles
