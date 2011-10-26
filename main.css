@@ -1,6 +1,6 @@
 @charset "UTF-8";
 
-#tag_box {
+#morextalk_box {
     position: absolute;
     margin: 0;
     padding: 0;
@@ -13,27 +13,19 @@
     font-size: 13px;
     opacity: 0.9;
 }
-#tag_box ul {
+#morextalk_box ul {
     margin: 0;
     padding: 5px 0;
     list-style-type: none;
 }
-#tag_box ul li {
+#morextalk_box ul li {
     margin: 0;
     padding: 3px 10px;
     cursor: pointer;
 }
-#tag_box ul li.current {
+#morextalk_box ul li.current {
     background-color: #C7C7C7;
     color: #000000;
-}
-.insert_tag_list_open {
-/*     display: block; */
-/*     float: left; */
-}
-.insert_tag_list {
-/*     display: block; */
-/*     clear: both; */
 }
 .insert_tag_list a {
     display: inline-block;

@@ -1,17 +1,19 @@
 (function($){
 
     // Init
+    var eventUnique = false;
     var titles = $('#title, #title_file, #title_cite');
     var inputPacks = titles.closest('.post_input_pack');
-    var tagsUrl = $('#logo h1 a').attr('href').replace(/(.*blog_id=\d+)(.*)/,'$1') + '&type=tags';
+    var scriptUrl = $('#logo h1 a').attr('href').replace(/(.*blog_id=\d+)(.*)/,'$1');
+    var tagsUrl = scriptUrl + '&type=tags';
+    var usersUrl = scriptUrl + '&type=following';
     var currentTitle;
     titles.focus(function(){
         currentTitle = this;
     });
-
-    $('body').append('<div id="tag_box" style="display: none;"><ul id="tag_box_list"></ul></div>');
+    $('body').append('<div id="morextalk_box" style="display: none;"><ul id="morextalk_list_box"></ul></div>');
     var postOf = $('#post').offset();
-    var tagBox = $('#tag_box').css({ top: postOf.top, left: postOf.left + 583 });
+    var morextalkBox = $('#morextalk_box').css({ top: postOf.top, left: postOf.left + 583 });
 
     // Get Tags
     $.ajax({
@@ -19,81 +21,17 @@
         dataType: 'html',
         url: tagsUrl,
         success: function(html){
-            var tags = $(html).find('#talks').html();
-            tags = tags.replace(/<.*?>|\s/g,'')
-                       .replace(/\(\d+\)/g,',')
-                       .replace(/,$/g,'')
-                       .split(',');
-            tags.sort();
-            for (var i = 0, n = tags.length; i < n; i++) {
-                tags[i] = '<li>' + tags[i] + '</li>';
-            }
-            $('#tag_box_list')[0].innerHTML = tags.join('');
-            var tagMode = false;
-            var typing = '';
-            $('#tag_box_list').delegate('li', 'click', function(){
-                var typingReg = new RegExp('^' + typing, '');
-                var tag = $(this).text().replace(typingReg, '');
-                var v = currentTitle.value;
-                var caret = getCaret(currentTitle);
-                currentTitle.value = caret.prevAll + tag + caret.nextAll;
-                currentTitle.selectionStart = caret.prevAll.length + tag.length;
-                currentTitle.selectionEnd = caret.prevAll.length + tag.length;
-                tagMode = false;
-            });
-            titles
-                .keydown(function(e){
-                    var caret = getCaret(this);
-                    if (tagMode) {
-                        switch (e.which) {
-                            case 13: // Enter
-                                var typingReg = new RegExp('^' + typing, '');
-                                var tag = $('#tag_box_list').find('.current').text().replace(typingReg, '');
-                                this.value = caret.prevAll + tag + caret.nextAll;
-                                this.selectionStart = caret.prevAll.length + tag.length;
-                                this.selectionEnd = caret.prevAll.length + tag.length;
-                                tagMode = false;
-                                return false;
-                            case 40: // down
-                                moveCurrent(this, caret.position, 'next');
-                                return false;
-                            case 38: // up
-                                moveCurrent(this, caret.position, 'prev');
-                                return false;
-                        }
-                    }
-                }) // keydown
-                .keyup(function(e){
-                    var v = this.value;
-                    var caret = getCaret(this);
-                    if (e.which == 38 || e.which == 40) {
-                        return false;
-                    }
-                    switch (caret.prev) {
-                        case ' ':
-                            tagMode = false;
-                            typing = '';
-                            tagBox.hide();
-                            $('#tag_box_list')[0].innerHTML = tags.join('');
-                            break;
-                        case '#':
-                            tagMode = true;
-                            typing = '';
-                            tagBox.show();
-                            break;
-                        default:
-                            if (!tagMode) return;
-                            typing += String.fromCharCode(e.which).toLowerCase().replace(/[^-_.!~*'\(\)a-zA-Z0-9;\/?:\&=+\$,%]/,'');
-                            var reg = new RegExp('<li[^<]*>' + typing + '[^<]+</li>','g');
-                            var htmlOrg = tags.join('');
-                            var html = htmlOrg.match(reg);
-                            if (html != null) {
-                                $('#tag_box_list')[0].innerHTML = html.join('');
-                            } else {
-                                $('#tag_box_list')[0].innerHTML = '<li>No Match</li>';
-                            }
-                    }
-                }); // keyup
+            assist(html, 'tag');
+        }
+    });
+
+    // Get Following users
+    $.ajax({
+        cache: false,
+        dataType: 'html',
+        url: usersUrl,
+        success: function(html){
+            assist(html, 'user');
         }
     });
 
@@ -127,17 +65,127 @@
     });
 
     // Fuctions
-    function moveCurrent (elm, caretPos, direction) {
-        var tagBoxList = $('#tag_box_list');
-        var current = tagBoxList.find('.current');
+    // Assist in typing
+    function assist (html, target) {
+        var item = $(html).find('#talks').html();
+        var items = [];
+        if (target === 'tag') {
+            items = item.replace(/<.*?>|\s/g,'')
+                        .replace(/\(\d+\)/g,',')
+                        .replace(/,$/g,'')
+                        .split(',');
+        } else if (target === 'user') {
+            item = item.replace(/\s/g,'');
+            var p = /(author=)([^"]+)/g;
+            var n = 0;
+            while ((matches = p.exec(item)) != null){
+                items.push(matches[2]);
+                items.sort();
+                n++;
+                if (n > 10000) {
+                    break;
+                }
+            }
+        }
+        items.sort();
+        for (var i = 0, n = items.length; i < n; i++) {
+            items[i] = '<li>' + items[i] + '</li>';
+        }
+        var listBox = $('#morextalk_list_box');
+        $.data(listBox[0], target + '_html', items.join(''));
+        var assistMode = false;
+        var typing = '';
+        listBox.delegate('li', 'click', function(){
+            var typingReg = new RegExp('^' + typing, '');
+            var tag = $(this).text().replace(typingReg, '');
+            var v = currentTitle.value;
+            var caret = getCaret(currentTitle);
+            currentTitle.value = caret.prevAll + tag + caret.nextAll;
+            currentTitle.selectionStart = caret.prevAll.length + tag.length;
+            currentTitle.selectionEnd = caret.prevAll.length + tag.length;
+            assistMode = false;
+        });
+        if (eventUnique) {
+            return;
+        }
+        titles
+            .keydown(function(e){
+                var caret = getCaret(this);
+                if (assistMode) {
+                    switch (e.which) {
+                        case 13: // Enter
+                            var typingReg = new RegExp('^' + typing, '');
+                            var tag = listBox.find('.current').text().replace(typingReg, '');
+                            this.value = caret.prevAll + tag + caret.nextAll;
+                            this.selectionStart = caret.prevAll.length + tag.length;
+                            this.selectionEnd = caret.prevAll.length + tag.length;
+                            morextalkBox.hide();
+                            assistMode = false;
+                            return false;
+                        case 40: // down
+                            moveCurrent(this, caret.position, 'next', listBox);
+                            return false;
+                        case 38: // up
+                            moveCurrent(this, caret.position, 'prev', listBox);
+                            return false;
+                    }
+                }
+            }) // keydown
+            .keyup(function(e){
+                var v = this.value;
+                var caret = getCaret(this);
+                if (e.which == 38 || e.which == 40) {
+                    return false;
+                }
+                switch (caret.prev) {
+                    case ' ':
+                        assistMode = false;
+                        typing = '';
+                        morextalkBox.hide();
+                        listBox[0].innerHTML = items.join('');
+                        break;
+                    case '#':
+                        assistMode = true;
+                        typing = '';
+                        var tagHtml = $.data(listBox[0], 'tag_html');
+                        $.data(listBox[0], 'current_html', tagHtml);
+                        listBox[0].innerHTML = tagHtml;
+                        morextalkBox.show();
+                        break;
+                    case '@':
+                        assistMode = true;
+                        typing = '';
+                        var userHtml = $.data(listBox[0], 'user_html');
+                        $.data(listBox[0], 'current_html', userHtml);
+                        listBox[0].innerHTML = userHtml;
+                        morextalkBox.show();
+                        break;
+                    default:
+                        if (!assistMode) return;
+                        typing += String.fromCharCode(e.which).toLowerCase().replace(/[^-_.!~*'\(\)a-zA-Z0-9;\/?:\&=+\$,%]/,'');
+                        var reg = new RegExp('<li[^<]*>' + typing + '[^<]+</li>','g');
+                        var htmlOrg = $.data(listBox[0], 'current_html');
+                        var html = htmlOrg.match(reg);
+                        if (html != null) {
+                            listBox[0].innerHTML = html.join('');
+                        } else {
+                            listBox[0].innerHTML = '<li>No Match</li>';
+                        }
+                }
+            }); // keyup
+        eventUnique = true;
+    }
+
+    function moveCurrent (elm, caretPos, direction, listBox) {
+        var current = listBox.find('.current');
         if (current.length > 0 && direction == 'next') {
             current.removeClass('current').next().addClass('current');
         } else if (current.length > 0 && direction == 'prev') {
             current.removeClass('current').prev().addClass('current');
         } else if (direction == 'next') {
-            tagBoxList.find('li:first-child').addClass('current');
+            listBox.find('li:first-child').addClass('current');
         } else if (direction == 'prev') {
-            tagBoxList.find('li:last-child').addClass('current');
+            listBox.find('li:last-child').addClass('current');
         }
         elm.selectionStart = caretPos;
         elm.selectionEnd = caretPos;
